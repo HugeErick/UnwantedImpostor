@@ -6,7 +6,7 @@ export interface PlayerCard {
   word: string; 
 }
 
-export interface FoodEntry {
+export interface WordEntry {
   word: string;
   hint: string;
 }
@@ -18,7 +18,7 @@ export function resolveImpostorCount(players: number, impostors: number, auto: b
   return 3;
 }
 
-export function parseCSV(raw: string): FoodEntry[] {
+export function parseCSV(raw: string): WordEntry[] {
   return raw
     .split('\n')
     .slice(1)  
@@ -43,7 +43,7 @@ export function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-export function buildCards(players: number, impostorCount: number, entry: FoodEntry): PlayerCard[] {
+export function buildCards(players: number, impostorCount: number, entry: WordEntry): PlayerCard[] {
   // build role list: N players, M impostors
   const roles: Role[] = [
     ...Array(players - impostorCount).fill('player'),
@@ -61,3 +61,4 @@ export function buildCards(players: number, impostorCount: number, entry: FoodEn
 export function pickStartingPlayer(players: number): number {
   return Math.floor(Math.random() * players) + 1;
 }
+

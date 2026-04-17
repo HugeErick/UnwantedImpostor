@@ -5,10 +5,20 @@
 </script>
 
 <main class="mx-auto min-h-screen flex flex-col items-center justify-center gap-8 p-4 ">
-<div class="flex flex-col items-center gap-2 text-center">
+<div class="flex flex-col items-center gap-4 text-center">
   <h1 class="text-4xl font-extrabold tracking-tight">Impostor Game</h1>
+  <p class="text-muted-foreground">
+    By 
+    <a
+      href="https://github.com/HugeErick"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="font-bold text-(--customGold)">
+      @HugeErick
+    </a>
+  </p>
 </div>
-  <Card.Root class="mt-10 w-full max-w-sm">
+  <Card.Root class="my-5 w-full max-w-sm">
     <Card.Content>
       <Button
         variant="outline"

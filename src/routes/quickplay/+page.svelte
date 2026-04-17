@@ -1,7 +1,10 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/button/index.js';
-  import * as Card from '$lib/components/ui/card/index.js';
-  import foodRaw from '$lib/assets/final_food.csv?raw';
+  import { goto } from "$app/navigation";
+  import { Button } from "$lib/components/ui/button/index.js";
+  import { Label } from "$lib/components/ui/label/index.js";
+  import * as Card from "$lib/components/ui/card/index.js";
+  import { Minus, Plus, MoveRight, Dices } from "@lucide/svelte";
+  import foodRaw from "$lib/assets/final_food.csv?raw";
   import {
     parseCSV,
     buildCards,
@@ -9,12 +12,12 @@
     pickStartingPlayer,
     resolveImpostorCount,
     type PlayerCard,
-  } from '$lib/game';
+  } from "$lib/game";
 
-  // ── State ──────────────────────────────────────────────
-  type Screen = 'setup' | 'reveal' | 'start';
+  // match state 
+  type Screen = "setup" | "reveal" | "start";
 
-  let screen  = $state<Screen>('setup');
+  let screen  = $state<Screen>("setup");
   let players = $state(6);
   let impostors    = $state(1);
   let autoImpostor = $state(false);
@@ -27,7 +30,7 @@
   // derived: actual impostor count (respects auto toggle)
   let resolvedImpostors = $derived(resolveImpostorCount(players, impostors, autoImpostor));
 
-  // ── Constraints ────────────────────────────────────────
+  // constraints  
   const MAX_PLAYERS   = 25;
   const MAX_IMPOSTORS = 3;
 
@@ -38,17 +41,20 @@
     impostors = Math.min(MAX_IMPOSTORS, Math.max(1, v));
   }
 
-  // ── Start game ─────────────────────────────────────────
+  // start game
   function startGame() {
+    // entries will need to have several options and just 
+    // randomly choose between those options
     const entries = parseCSV(foodRaw);
+    // entry = word choosen
     const entry   = pickRandom(entries);
     cards         = buildCards(players, resolvedImpostors, entry);
     currentCard   = 0;
     cardFlipped   = false;
-    screen        = 'reveal';
+    screen        = "reveal";
   }
 
-  // ── Card reveal flow ───────────────────────────────────
+  // card reveal flow 
   function flipCard() {
     cardFlipped = true;
   }
@@ -59,62 +65,88 @@
       cardFlipped = false;
     } else {
       startingPlayer = pickStartingPlayer(players);
-      screen = 'start';
+      screen = "start";
     }
   }
 
   let card = $derived(cards[currentCard]);
 </script>
 
-<!-- ═══════════════════════════════════════════════════════
-     SETUP SCREEN
-════════════════════════════════════════════════════════ -->
-{#if screen === 'setup'}
-<main class="min-h-screen flex flex-col items-center justify-center gap-6 p-6">
+<!-- setup screen -->
+{#if screen === "setup"}
+<main class="min-h-screen flex flex-col items-center justify-center gap-4 p-4">
+  <h2 class="text-4xl font-extrabold tracking-tight">Quick Play</h2>
+  <div class="flex flex-col items-center align-middle justify-center gap-4">
+    <h3> Categories available:</h3>
+    <p class="text-muted-foreground text-sm -mt-4">Food</p>
+  </div>
 
-  <h2 class="text-3xl font-extrabold tracking-tight">Quick Play</h2>
-  <p class="text-muted-foreground text-sm -mt-4">Category: 🍎 Food</p>
-
-  <Card.Root class="w-full max-w-sm">
-    <Card.Content class="flex flex-col gap-5 pt-4">
+  <Card.Root class="w-full max-w-sm flex flex-col items-center justify-center align-middle p-4">
+    <Card.Content class="flex flex-col items-center justify-center align-middle gap-5 p-2">
 
       <!-- Players -->
-      <div class="flex flex-col gap-1">
-        <label class="text-sm font-semibold">
-          Players <span class="text-muted-foreground font-normal">(2–{MAX_PLAYERS})</span>
-        </label>
-        <div class="flex items-center gap-3">
-          <Button variant="outline" size="icon"
-            onclick={() => clampPlayers(players - 1)}>−</Button>
-          <span class="text-2xl font-bold w-8 text-center">{players}</span>
-          <Button variant="outline" size="icon"
-            onclick={() => clampPlayers(players + 1)}>+</Button>
+      <div class="flex flex-col items-center justify-center align-middle gap-2">
+        <Label class="text-sm font-semibold">
+          Players <span class="text-muted-foreground font-normal">(2-{MAX_PLAYERS})</span>
+        </Label>
+        <div class="flex items-center align-middle justify-center text-center gap-2">
+          <Button
+            variant="outline"
+            size="icon" 
+            class="m-1"
+            onclick={() => clampPlayers(players - 1)}
+          >
+            <Minus />
+          </Button>
+          <span class="text-2xl font-bold w-6 text-center mx-4">{players}</span>
+          <Button
+            variant="outline"
+            size="icon"
+            class="m-1"
+            onclick={() => clampPlayers(players + 1)}
+          >
+            <Plus />
+          </Button>
         </div>
       </div>
 
       <!-- Impostors -->
-      <div class="flex flex-col gap-1">
-        <label class="text-sm font-semibold">
-          Impostors <span class="text-muted-foreground font-normal">(1–{MAX_IMPOSTORS})</span>
-        </label>
-        <div class="flex items-center gap-3" class:opacity-40={autoImpostor}>
-          <Button variant="outline" size="icon" disabled={autoImpostor}
-            onclick={() => clampImpostors(impostors - 1)}>−</Button>
-          <span class="text-2xl font-bold w-8 text-center">{resolvedImpostors}</span>
-          <Button variant="outline" size="icon" disabled={autoImpostor}
-            onclick={() => clampImpostors(impostors + 1)}>+</Button>
+      <div class="flex flex-col items-center justify-center align-middle gap-2">
+        <Label class="text-sm font-semibold">
+          Impostors <span class="text-muted-foreground font-normal">(1-{MAX_IMPOSTORS})</span>
+        </Label>
+        <div class="flex items-center align-middle justify-center text-center gap-2" class:opacity-40={autoImpostor}>
+          <Button
+            variant="outline"
+            size="icon"
+            class="m-1"
+            disabled={autoImpostor}
+            onclick={() => clampImpostors(impostors - 1)}
+          >
+            <Minus />
+          </Button>
+          <span class="text-2xl font-bold w-6 text-center mx-4">{resolvedImpostors}</span>
+          <Button
+            variant="outline"
+            size="icon"
+            class="m-1"
+            disabled={autoImpostor}
+            onclick={() => clampImpostors(impostors + 1)}
+          >
+            <Plus />
+          </Button>
         </div>
       </div>
 
       <!-- Auto impostor toggle -->
-      <label class="flex items-center gap-3 cursor-pointer select-none">
+      <Label class="flex items-center gap-3 cursor-pointer select-none">
         <input
           type="checkbox"
           class="w-4 h-4 accent-primary"
           bind:checked={autoImpostor}
         />
-        <span class="text-sm">Auto-manage impostors based on player count</span>
-      </label>
+        <span class="block w-full text-sm wrap-break-word">Auto-manage impostors <br /> based on player count</span>
+      </Label>
 
     </Card.Content>
   </Card.Root>
@@ -123,16 +155,21 @@
     Start Game
   </Button>
 
+  <Button
+    variant="outline"
+    class="w-full max-w-sm py-6 text-lg font-bold"
+    onclick={() => goto("/")}>
+    Go back
+  </Button>
+
 </main>
 
 
-<!-- ═══════════════════════════════════════════════════════
-     REVEAL SCREEN  (one card at a time)
-════════════════════════════════════════════════════════ -->
-{:else if screen === 'reveal'}
+<!-- reveal screen (one card at a time) -->
+{:else if screen === "reveal"}
 <main class="min-h-screen flex flex-col items-center justify-center gap-6 p-6">
 
-  <p class="text-muted-foreground text-sm">
+  <p class="text-muted-foreground text-md">
     Pass the phone to <span class="font-bold text-foreground">Player #{card.number}</span>
   </p>
 
@@ -143,27 +180,26 @@
       justify-center gap-4 p-8 text-center cursor-pointer select-none
       transition-all duration-300
       {cardFlipped
-        ? card.role === 'impostor'
-          ? 'bg-destructive/10 border-destructive'
-          : 'bg-primary/5 border-primary'
-        : 'bg-muted border-border'}
+        ? card.role === "impostor"
+          ? "bg-destructive/10 border-destructive"
+          : "bg-primary/5 border-primary"
+        : "bg-muted border-border"}
     "
     onclick={!cardFlipped ? flipCard : undefined}
     role="button"
     tabindex="0"
-    onkeydown={(e) => e.key === 'Enter' && !cardFlipped && flipCard()}
+    onkeydown={(e) => e.key === "Enter" && !cardFlipped && flipCard()}
   >
     {#if !cardFlipped}
-      <span class="text-4xl">👆</span>
-      <p class="text-lg font-semibold">Tap to reveal</p>
+      <p class="text-4xl font-semibold">Tap to reveal</p>
       <p class="text-xs text-muted-foreground">Make sure no one else is watching</p>
     {:else}
       <p class="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-        {card.role === 'impostor' ? '🕵️ You are the Impostor' : '✅ You are a Player'}
+        {card.role === "impostor" ? "You are the Impostor" : "You are a Player"}
       </p>
-      <p class="text-4xl font-extrabold">{card.word}</p>
+      <p class="text-5xl font-extrabold">{card.word}</p>
       <p class="text-xs text-muted-foreground mt-2">
-        {card.role === 'impostor' ? 'This is your hint — stay sneaky.' : 'This is the secret word.'}
+        {card.role === "impostor" ? "This is your hint — stay sneaky." : "This is the secret word."}
       </p>
     {/if}
   </div>
@@ -174,18 +210,29 @@
   </p>
 
   {#if cardFlipped}
-    <Button class="w-full max-w-xs" onclick={nextCard}>
-      {currentCard < cards.length - 1 ? 'Next Player →' : 'Start Game →'}
+    <Button variant="outline" class="w-full max-w-xs" onclick={nextCard}>
+      {#if currentCard < cards.length - 1}
+        <div class="flex flex-row items-center align-middle justify-center gap-2">
+          <span>
+            Next Player
+          </span>
+          <MoveRight class="self-center align-middle" />
+        </div>
+      {:else}
+        <div class="flex flex-row items-center align-middle justify-center gap-2">
+          <span>
+            Start Game
+          </span>
+          <Dices />
+        </div>
+      {/if}
     </Button>
   {/if}
 
 </main>
 
-
-<!-- ═══════════════════════════════════════════════════════
-     START SCREEN
-════════════════════════════════════════════════════════ -->
-{:else if screen === 'start'}
+<!-- start screen -->
+{:else if screen === "start"}
 <main class="min-h-screen flex flex-col items-center justify-center gap-6 p-6 text-center">
 
   <p class="text-muted-foreground text-sm uppercase tracking-widest">Game on!</p>
@@ -195,7 +242,7 @@
   <p class="text-muted-foreground">goes first</p>
 
   <Button variant="outline" class="mt-8 w-full max-w-xs"
-    onclick={() => { screen = 'setup'; }}>
+    onclick={() => { screen = "setup"; }}>
     Play Again
   </Button>
 

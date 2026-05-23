@@ -1,10 +1,12 @@
 <script lang="ts">
+  // quickplay/+page.svelte
   import { goto } from "$app/navigation";
   import { Button } from "$lib/components/ui/button/index.js";
   import { Label } from "$lib/components/ui/label/index.js";
   import * as Card from "$lib/components/ui/card/index.js";
   import { Minus, Plus, MoveRight, Dices } from "@lucide/svelte";
   import foodRaw from "$lib/assets/final_food.csv?raw";
+  import sportsRaw from "$lib/assets/sports.csv?raw";
   import {
     parseCSV,
     buildCards,
@@ -45,7 +47,8 @@
   function startGame() {
     // entries will need to have several options and just 
     // randomly choose between those options
-    const entries = parseCSV(foodRaw);
+    const datasets = [foodRaw, sportsRaw];
+    const entries = parseCSV(pickRandom(datasets));
     // entry = word choosen
     const entry   = pickRandom(entries);
     cards         = buildCards(players, resolvedImpostors, entry);
@@ -78,7 +81,7 @@
   <h2 class="text-4xl font-extrabold tracking-tight">Quick Play</h2>
   <div class="flex flex-col items-center align-middle justify-center gap-4">
     <h3> Categories available:</h3>
-    <p class="text-muted-foreground text-sm -mt-4">Food</p>
+    <p class="text-muted-foreground text-sm -mt-4">Food | Sports</p>
   </div>
 
   <Card.Root class="w-full max-w-sm flex flex-col items-center justify-center align-middle p-4">

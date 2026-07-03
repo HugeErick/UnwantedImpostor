@@ -1,13 +1,14 @@
 <script lang="ts">
 import '../app.css';
 import { ModeWatcher } from 'mode-watcher';
+import unwantedfavicon from "$lib/assets/unwantedfavicon.svg";
 
 let { children } = $props();
 
 </script>
 
 <svelte:head>
-  <!-- <link rel="icon" href={favicon} /> -->
+  <link rel="icon" href={unwantedfavicon} />
 </svelte:head>
 
 <ModeWatcher />

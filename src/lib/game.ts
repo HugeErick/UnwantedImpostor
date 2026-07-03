@@ -1,4 +1,4 @@
-export type Role = 'player' | 'impostor';
+export type Role = "player" | "impostor";
 
 export interface PlayerCard {
   number: number;
@@ -11,6 +11,10 @@ export interface WordEntry {
   hint: string;
 }
 
+export interface WordOnlyEntry {
+  word: string;
+}
+
 export function resolveImpostorCount(players: number, impostors: number, auto: boolean): number {
   if (!auto) return impostors;
   if (players < 9)  return 1;
@@ -20,12 +24,23 @@ export function resolveImpostorCount(players: number, impostors: number, auto: b
 
 export function parseCSV(raw: string): WordEntry[] {
   return raw
-    .split('\n')
+    .split("\n")
     .slice(1)  
     .filter(l => l.trim())
     .map(l => {
-      const [word, hint] = l.split(',').map(s => s.trim());
+      const [word, hint] = l.split(",").map(s => s.trim());
       return { word, hint };
+    });
+}
+
+export function parseCSVForHintless(raw: string): WordOnlyEntry[] {
+  return raw
+    .split("\n")
+    .slice(1)
+    .filter(l => l.trim())
+    .map(l => {
+      const [word] = l.split(",");
+      return { word: word.trim() };
     });
 }
 
@@ -33,7 +48,7 @@ export function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// --- Shuffle array (Fisher-Yates) ---
+// --- shuffle array (Fisher-Yates) ---
 export function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -46,15 +61,29 @@ export function shuffle<T>(arr: T[]): T[] {
 export function buildCards(players: number, impostorCount: number, entry: WordEntry): PlayerCard[] {
   // build role list: N players, M impostors
   const roles: Role[] = [
-    ...Array(players - impostorCount).fill('player'),
-    ...Array(impostorCount).fill('impostor'),
+    ...Array(players - impostorCount).fill("player"),
+    ...Array(impostorCount).fill("impostor"),
   ];
   const shuffledRoles = shuffle(roles);
 
   return shuffledRoles.map((role, i) => ({
     number: i + 1,
     role,
-    word: role === 'player' ? entry.word : entry.hint,
+    word: role === "player" ? entry.word : entry.hint,
+  }));
+}
+
+export function buildCardsForHintless(players: number, impostorCount: number, entry: WordOnlyEntry): PlayerCard[] {
+  const roles: Role[] = [
+    ...Array(players - impostorCount).fill("player"),
+    ...Array(impostorCount).fill("impostor"),
+  ];
+  const shuffledRoles = shuffle(roles);
+
+  return shuffledRoles.map((role, i) => ({
+    number: i + 1,
+    role,
+    word: role === "player" ? entry.word : "",
   }));
 }
 

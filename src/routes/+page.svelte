@@ -19,13 +19,21 @@
   </p>
 </div>
   <Card.Root class="my-5 w-full max-w-sm">
-    <Card.Content>
+    <Card.Content class="flex flex-col gap-6">
       <Button
         variant="outline"
         class="w-full"
         onclick={() => goto("/quickplay")}
       >
         Quick Play
+      </Button>
+
+      <Button
+        variant="outline"
+        class="w-full"
+        onclick={() => goto("/customgame")}
+      >
+        Custom Game
       </Button>
     </Card.Content>
   </Card.Root>

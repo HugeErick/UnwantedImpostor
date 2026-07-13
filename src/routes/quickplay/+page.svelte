@@ -38,7 +38,7 @@
   const MAX_IMPOSTORS = 3;
 
   function clampPlayers(v: number) {
-    players = Math.min(MAX_PLAYERS, Math.max(2, v));
+    players = Math.min(MAX_PLAYERS, Math.max(3, v));
   }
   function clampImpostors(v: number) {
     impostors = Math.min(MAX_IMPOSTORS, Math.max(1, v));
@@ -91,7 +91,7 @@
       <!-- Players -->
       <div class="flex flex-col items-center justify-center align-middle gap-2">
         <Label class="text-sm font-semibold">
-          Players <span class="text-muted-foreground font-normal">(2-{MAX_PLAYERS})</span>
+          Players <span class="text-muted-foreground font-normal">(3-{MAX_PLAYERS})</span>
         </Label>
         <div class="flex items-center align-middle justify-center text-center gap-2">
           <Button

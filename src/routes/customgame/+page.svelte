@@ -1,25 +1,30 @@
 <script lang="ts">
   // customgame/+page.svelte
+  import { untrack } from "svelte";
   import { goto } from "$app/navigation";
   import { Button } from "$lib/components/ui/button/index.js";
   import * as ButtonGroup from "$lib/components/ui/button-group/index.js";
   import { Label } from "$lib/components/ui/label/index.js";
+  import { Input } from "$lib/components/ui/input/index.js"
   import * as Card from "$lib/components/ui/card/index.js";
   import { Minus, Plus, MoveRight, Dices } from "@lucide/svelte";
-  import WorkingOnGUI from "$lib/components/WorkingOnGUI.svelte";
+  // import WorkingOnGUI from "$lib/components/WorkingOnGUI.svelte";
 
   import foodRaw from "$lib/assets/final_food.csv?raw";
   import sportsRaw from "$lib/assets/sports.csv?raw";
   import countriesRaw from "$lib/assets/countries.csv?raw";
   import {
     parseCSV,
-    buildCards,
     parseCSVForHintless,
-    buildCardsForHintless,
+    buildCardsWithNames,
+    buildCardsHintlessWithNames,
     pickRandom,
     pickStartingPlayer,
     resolveImpostorCount,
-    type PlayerCard,
+    syncPlayerNames,
+    loadStoredNames,
+    saveStoredNames,
+    type CustomGamePlayerCard,
   } from "$lib/game";
 
   // match state 
@@ -32,20 +37,31 @@
   let impostors    = $state(1);
   let autoImpostor = $state(false);
 
-  let cards        = $state<PlayerCard[]>([]);
+  let cards        = $state<CustomGamePlayerCard[]>([]);
   let currentCard  = $state(0);       // index into cards[]
   let cardFlipped  = $state(false);
   let startingPlayer = $state(0);
 
+  let playerNames = $state<string[]>(
+    syncPlayerNames(untrack(() => players), loadStoredNames()));
+
+  $effect(() => {
+    saveStoredNames(playerNames);
+  });
+
   // derived: actual impostor count (respects auto toggle)
   let resolvedImpostors = $derived(resolveImpostorCount(players, impostors, autoImpostor));
+
+  let startingPlayerName = $derived(
+    playerNames[startingPlayer - 1]?.trim() || `Player ${startingPlayer}`
+  );
 
   // constraints  
   const MAX_PLAYERS   = 25;
   const MAX_IMPOSTORS = 3;
 
   function clampPlayers(v: number) {
-    players = Math.min(MAX_PLAYERS, Math.max(2, v));
+    players = Math.min(MAX_PLAYERS, Math.max(3, v));
   }
   function clampImpostors(v: number) {
     impostors = Math.min(MAX_IMPOSTORS, Math.max(1, v));
@@ -59,11 +75,11 @@
     if (gameType === "hintless") {
       const entries = parseCSVForHintless(rawData);
       const entry   = pickRandom(entries);
-      cards = buildCardsForHintless(players, resolvedImpostors, entry);
+      cards = buildCardsHintlessWithNames(players, resolvedImpostors, entry, playerNames);
     } else {
       const entries = parseCSV(rawData);
       const entry   = pickRandom(entries);
-      cards = buildCards(players, resolvedImpostors, entry);
+      cards = buildCardsWithNames(players, resolvedImpostors, entry, playerNames);
     }
 
     currentCard   = 0;
@@ -132,7 +148,7 @@
       </ButtonGroup.Root>
 
       <div
-        class="w-full flex flex-col sm:flex-row sm:gap-6 gap-2 justify-center align-middle p-2 items-center"
+        class="w-full flex flex-col sm:flex-row sm:gap-6 gap-2 justify-center align-middle p-2 items-start"
         id="customSettings"
       >
         <Card.Root class="w-full h-full max-w-sm flex flex-col items-center justify-center align-middle p-4">
@@ -141,7 +157,7 @@
             <!-- Players -->
             <div class="flex flex-col items-center justify-center align-middle gap-2">
               <Label class="text-sm font-semibold">
-                Players <span class="text-muted-foreground font-normal">(2-{MAX_PLAYERS})</span>
+                Players <span class="text-muted-foreground font-normal">(3-{MAX_PLAYERS})</span>
               </Label>
               <div class="flex items-center align-middle justify-center text-center gap-2">
                 <Button
@@ -207,11 +223,30 @@
 
         <Card.Root class="w-full h-full max-w-sm flex flex-col items-center justify-center align-middle p-4">
           <Card.Content class="flex flex-col items-center justify-center align-middle gap-5 p-2">
-            <WorkingOnGUI feature="Naming players" />
+            <Label class="font-semibold">
+              Player names <span class="text-muted-foreground font-normal">(optional)</span>
+            </Label>
+            <div class="w-full max-h-64 overflow-y-auto flex flex-col gap-2 pr-1">
+              {#each Array(players) as _, i}
+              <div class="flex items-center gap-4 my-1">
+                <span class="text-md text-muted-foreground w-6 text-right shrink-0">{i + 1}</span>
+                  <Input
+                    type="text"
+                    class=
+                    "w-full flex-1 rounded-md
+                    border border-input bg-transparent
+                    px-2 py-1.5 text-md
+                    outline-none focus:ring-2 focus:ring-primary/40"
+                    placeholder={`Player ${i + 1}`}
+                    maxlength={20}
+                    bind:value={playerNames[i]}
+                  />
+              </div>
+              {/each}
+            </div>
           </Card.Content>
         </Card.Root>
       </div>
-
     </div>
 
     <div class="flex flex-col sm:gap-4 gap-2 items-center my-2">
@@ -236,7 +271,7 @@
   <main class="min-h-screen flex flex-col items-center justify-center gap-6 p-6">
 
     <p class="text-muted-foreground text-md">
-      Pass the phone to <span class="font-bold text-foreground">Player #{card.number}</span>
+      Pass the phone to <span class="font-bold text-foreground">{card.name}</span>
     </p>
 
     <!-- Card -->
@@ -311,7 +346,7 @@
 
   <p class="text-muted-foreground text-sm uppercase tracking-widest">Game on!</p>
   <h2 class="text-5xl font-extrabold">
-    Player #{startingPlayer}
+    {startingPlayerName}
   </h2>
   <p class="text-muted-foreground">goes first</p>
 

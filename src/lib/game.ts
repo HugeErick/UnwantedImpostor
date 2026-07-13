@@ -6,6 +6,13 @@ export interface PlayerCard {
   word: string; 
 }
 
+export interface CustomGamePlayerCard {
+  number: number;
+  role: Role;
+  word: string; 
+  name: string;
+}
+
 export interface WordEntry {
   word: string;
   hint: string;
@@ -58,6 +65,39 @@ export function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+export function syncPlayerNames(count: number, existing: string[] = []): string[] {
+  return Array.from({ length: count }, (_, i) => existing[i] ?? "");
+}
+
+function resolveName(names: string[], index: number): string {
+  const raw = names[index]?.trim();
+  return raw ? raw : `Player ${index + 1}`;
+}
+
+const PLAYER_NAMES_STORAGE_KEY = "impostor:playerNames";
+
+export function loadStoredNames(): string[] {
+  if (typeof localStorage === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(PLAYER_NAMES_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveStoredNames(names: string[]): void {
+  if (typeof localStorage === "undefined") return;
+  try {
+    localStorage.setItem(PLAYER_NAMES_STORAGE_KEY, JSON.stringify(names));
+  } catch {
+    alert("Something went wrong saving persistenly the names");
+    // ignore quota / serialization errors — names just won't persist this time
+  }
+}
+
 export function buildCards(players: number, impostorCount: number, entry: WordEntry): PlayerCard[] {
   // build role list: N players, M impostors
   const roles: Role[] = [
@@ -73,7 +113,33 @@ export function buildCards(players: number, impostorCount: number, entry: WordEn
   }));
 }
 
-export function buildCardsForHintless(players: number, impostorCount: number, entry: WordOnlyEntry): PlayerCard[] {
+export function buildCardsWithNames(
+  players: number,
+  impostorCount: number,
+  entry: WordEntry,
+  names: string[] = []
+): CustomGamePlayerCard[] {
+  // build role list: N players, M impostors
+  const roles: Role[] = [
+    ...Array(players - impostorCount).fill("player"),
+    ...Array(impostorCount).fill("impostor"),
+  ];
+  const shuffledRoles = shuffle(roles);
+
+  return shuffledRoles.map((role, i) => ({
+    number: i + 1,
+    role,
+    word: role === "player" ? entry.word : entry.hint, 
+    name: resolveName(names, i)
+  }));
+}
+
+export function buildCardsHintlessWithNames(
+  players: number,
+  impostorCount: number,
+  entry: WordOnlyEntry,
+  names: string[] = []
+): CustomGamePlayerCard[] {
   const roles: Role[] = [
     ...Array(players - impostorCount).fill("player"),
     ...Array(impostorCount).fill("impostor"),
@@ -84,6 +150,7 @@ export function buildCardsForHintless(players: number, impostorCount: number, en
     number: i + 1,
     role,
     word: role === "player" ? entry.word : "",
+    name: resolveName(names, i),
   }));
 }
 

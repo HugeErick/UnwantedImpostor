@@ -7,7 +7,7 @@
   import { Label } from "$lib/components/ui/label/index.js";
   import { Input } from "$lib/components/ui/input/index.js"
   import * as Card from "$lib/components/ui/card/index.js";
-  import { Minus, Plus, MoveRight, Dices } from "@lucide/svelte";
+  import { Minus, Plus, MoveRight, Dices, X } from "@lucide/svelte";
   // import WorkingOnGUI from "$lib/components/WorkingOnGUI.svelte";
 
   import foodRaw from "$lib/assets/final_food.csv?raw";
@@ -26,6 +26,58 @@
     saveStoredNames,
     type CustomGamePlayerCard,
   } from "$lib/game";
+
+  const CATEGORIES = [
+    { id: "food", label: "Food", data: foodRaw },
+    { id: "sports", label: "Sports", data: sportsRaw },
+    { id: "countries", label: "Countries", data: countriesRaw },
+  ]
+  type CategoryId = (typeof CATEGORIES)[number]["id"];
+  const CATEGORIES_STORAGE_KEY = "impostor:enabledCategories";
+
+  function loadStoredCategories(): Record<CategoryId, boolean> {
+    const fallback = Object.fromEntries(
+      CATEGORIES.map((c) => [c.id, true])
+    ) as Record<CategoryId, boolean>;
+ 
+    if (typeof localStorage === "undefined") return fallback;
+    try {
+      const raw = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      // merge so newly-added categories default to enabled
+      return { ...fallback, ...parsed };
+    } catch {
+      return fallback;
+    }
+  }
+
+  function saveStoredCategories(value: Record<CategoryId, boolean>) {
+    if (typeof localStorage === "undefined") return;
+    try {
+      localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(value));
+    } catch {
+      alert("categories are not being saved");
+    }
+  }
+
+  let enabledCategories = $state<Record<CategoryId, boolean>>(
+    untrack(() => loadStoredCategories())
+  );
+
+  $effect(() => {
+    saveStoredCategories(enabledCategories);
+  });
+
+  let activeCategoryCount = $derived(
+    Object.values(enabledCategories).filter(Boolean).length
+  );
+
+  function toggleCategory(id: CategoryId) {
+    // never allow disabling the last remaining category
+    if (enabledCategories[id] && activeCategoryCount === 1) return;
+    enabledCategories = { ...enabledCategories, [id]: !enabledCategories[id] };
+  }
 
   // match state 
   type Screen = "setup" | "reveal" | "start";
@@ -69,8 +121,12 @@
 
   // start game
   function startGame() {
-    const datasets = [foodRaw, sportsRaw, countriesRaw];
-    const rawData = pickRandom(datasets);
+    const activeDatasets = CATEGORIES.filter((c) => enabledCategories[c.id]).map(
+      (c) => c.data
+    );
+
+    const pool = activeDatasets.length > 0 ? activeDatasets : CATEGORIES.map((c) => c.data);
+    const rawData = pickRandom(pool);
 
     if (gameType === "hintless") {
       const entries = parseCSVForHintless(rawData);
@@ -114,8 +170,21 @@
       <h2 class="text-4xl font-extrabold tracking-tight">Custom Game</h2>
       <div class="flex flex-col items-center align-middle justify-center gap-4">
         <h3> Categories available:</h3>
-        <!-- TODO inyect automatically the categories -->
-        <p class="text-muted-foreground text-sm -mt-4">Food | Sports | Countries</p>
+        <div class="flex flex-wrap justify-center gap-2 m-1">
+          {#each CATEGORIES as category (category.id)}
+            <!-- TODO inyect automatically the categories -->
+            <Button
+              variant="ghost"
+              size="default"
+              class={enabledCategories[category.id]
+                ? "text-(--blendedMagenta) font-semibold"
+                : "text-muted-foreground opacity-50"}
+              onclick={() => toggleCategory(category.id)}
+            >
+              {category.label}
+            </Button>
+          {/each}
+        </div>
       </div>
     </div>
 
@@ -228,8 +297,10 @@
             </Label>
             <div class="w-full max-h-64 overflow-y-auto flex flex-col gap-2 pr-1">
               {#each Array(players) as _, i}
-              <div class="flex items-center gap-4 my-1">
-                <span class="text-md text-muted-foreground w-6 text-right shrink-0">{i + 1}</span>
+                <div class="flex items-center gap-4 my-1">
+                  <span class="text-md text-muted-foreground w-6 text-right shrink-0">
+                    {i + 1}
+                  </span>
                   <Input
                     type="text"
                     class=
@@ -241,7 +312,13 @@
                     maxlength={20}
                     bind:value={playerNames[i]}
                   />
-              </div>
+                  <Button
+                    variant="ghost"
+                    onclick={() => playerNames[i] = ""}
+                  >
+                    <X />
+                  </Button>
+                </div>
               {/each}
             </div>
           </Card.Content>

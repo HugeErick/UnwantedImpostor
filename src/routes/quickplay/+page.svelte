@@ -5,9 +5,8 @@
   import { Label } from "$lib/components/ui/label/index.js";
   import * as Card from "$lib/components/ui/card/index.js";
   import { Minus, Plus, MoveRight, Dices } from "@lucide/svelte";
-  import foodRaw from "$lib/assets/final_food.csv?raw";
-  import sportsRaw from "$lib/assets/sports.csv?raw";
-  import countriesRaw from "$lib/assets/countries.csv?raw";
+  import { i18n, t } from "$lib/i18n.svelte";
+  import { getAllDatasets } from "$lib/categories";
   import {
     parseCSV,
     buildCards,
@@ -48,7 +47,7 @@
   function startGame() {
     // entries will need to have several options and just 
     // randomly choose between those options
-    const datasets = [foodRaw, sportsRaw, countriesRaw];
+    const datasets = getAllDatasets(i18n.lang);
     const entries = parseCSV(pickRandom(datasets));
     // entry = word choosen
     const entry   = pickRandom(entries);
@@ -79,10 +78,10 @@
 <!-- setup screen -->
 {#if screen === "setup"}
 <main class="min-h-screen flex flex-col items-center justify-center gap-4 p-4">
-  <h2 class="text-4xl font-extrabold tracking-tight">Quick Play</h2>
+  <h2 class="text-4xl font-extrabold tracking-tight">{t('home.quickPlay')}</h2>
   <div class="flex flex-col items-center align-middle justify-center gap-4">
-    <h3> Categories available:</h3>
-    <p class="text-muted-foreground text-sm -mt-4">Food | Sports | Countries</p>
+    <h3> {t('setup.categoriesAvailable')}</h3>
+    <p class="text-muted-foreground text-sm -mt-4">{t('setup.quickPlayCategories')}</p>
   </div>
 
   <Card.Root class="w-full max-w-sm flex flex-col items-center justify-center align-middle p-4">
@@ -91,7 +90,7 @@
       <!-- Players -->
       <div class="flex flex-col items-center justify-center align-middle gap-2">
         <Label class="text-sm font-semibold">
-          Players <span class="text-muted-foreground font-normal">(3-{MAX_PLAYERS})</span>
+          {t('setup.players')} <span class="text-muted-foreground font-normal">(3-{MAX_PLAYERS})</span>
         </Label>
         <div class="flex items-center align-middle justify-center text-center gap-2">
           <Button
@@ -117,7 +116,7 @@
       <!-- Impostors -->
       <div class="flex flex-col items-center justify-center align-middle gap-2">
         <Label class="text-sm font-semibold">
-          Impostors <span class="text-muted-foreground font-normal">(1-{MAX_IMPOSTORS})</span>
+          {t('setup.impostors')} <span class="text-muted-foreground font-normal">(1-{MAX_IMPOSTORS})</span>
         </Label>
         <div class="flex items-center align-middle justify-center text-center gap-2" class:opacity-40={autoImpostor}>
           <Button
@@ -149,21 +148,21 @@
           class="w-4 h-4 accent-primary"
           bind:checked={autoImpostor}
         />
-        <span class="block w-full text-sm wrap-break-word">Auto-manage impostors <br /> based on player count</span>
+        <span class="block w-full text-sm wrap-break-word">{t('setup.autoImpostors')}</span>
       </Label>
 
     </Card.Content>
   </Card.Root>
 
   <Button class="w-full max-w-sm py-6 text-lg font-bold" onclick={startGame}>
-    Start Game
+    {t('common.startGame')}
   </Button>
 
   <Button
     variant="outline"
     class="w-full max-w-sm py-6 text-lg font-bold"
     onclick={() => goto("/")}>
-    Go back
+    {t('common.goBack')}
   </Button>
 
 </main>
@@ -174,7 +173,7 @@
 <main class="min-h-screen flex flex-col items-center justify-center gap-6 p-6">
 
   <p class="text-muted-foreground text-md">
-    Pass the phone to <span class="font-bold text-foreground">Player #{card.number}</span>
+    {t('reveal.passPhoneToNum', { number: card.number })}
   </p>
 
   <!-- Card -->
@@ -195,15 +194,15 @@
     onkeydown={(e) => e.key === "Enter" && !cardFlipped && flipCard()}
   >
     {#if !cardFlipped}
-      <p class="text-4xl font-semibold">Tap to reveal</p>
-      <p class="text-xs text-muted-foreground">Make sure no one else is watching</p>
+      <p class="text-4xl font-semibold">{t('reveal.tapToReveal')}</p>
+      <p class="text-xs text-muted-foreground">{t('reveal.keepSecret')}</p>
     {:else}
       <p class="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-        {card.role === "impostor" ? "You are the Impostor" : "You are a Player"}
+        {card.role === "impostor" ? t('reveal.youAreImpostor') : t('reveal.youArePlayer')}
       </p>
       <p class="text-5xl font-extrabold">{card.word}</p>
       <p class="text-xs text-muted-foreground mt-2">
-        {card.role === "impostor" ? "This is your hint — stay sneaky." : "This is the secret word."}
+        {card.role === "impostor" ? t('reveal.hintImpostor') : t('reveal.hintPlayer')}
       </p>
     {/if}
   </div>
@@ -218,14 +217,14 @@
       {#if currentCard < cards.length - 1}
         <div class="flex flex-row items-center align-middle justify-center gap-2">
           <span>
-            Next Player
+            {t('reveal.nextPlayer')}
           </span>
           <MoveRight class="self-center align-middle" />
         </div>
       {:else}
         <div class="flex flex-row items-center align-middle justify-center gap-2">
           <span>
-            Start Game
+            {t('common.startGame')}
           </span>
           <Dices />
         </div>
@@ -239,15 +238,15 @@
 {:else if screen === "start"}
 <main class="min-h-screen flex flex-col items-center justify-center gap-6 p-6 text-center">
 
-  <p class="text-muted-foreground text-sm uppercase tracking-widest">Game on!</p>
+  <p class="text-muted-foreground text-sm uppercase tracking-widest">{t('start.gameOn')}</p>
   <h2 class="text-5xl font-extrabold">
-    Player #{startingPlayer}
+    {t('start.playerStartsNum', { number: startingPlayer })}
   </h2>
-  <p class="text-muted-foreground">goes first</p>
+  <p class="text-muted-foreground">{t('start.goesFirst')}</p>
 
   <Button variant="outline" class="mt-8 w-full max-w-xs"
     onclick={() => { screen = "setup"; }}>
-    Play Again
+    {t('start.playAgain')}
   </Button>
 
 </main>

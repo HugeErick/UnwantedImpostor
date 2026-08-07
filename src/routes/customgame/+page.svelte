@@ -8,11 +8,8 @@
   import { Input } from "$lib/components/ui/input/index.js"
   import * as Card from "$lib/components/ui/card/index.js";
   import { Minus, Plus, MoveRight, Dices, X } from "@lucide/svelte";
-  // import WorkingOnGUI from "$lib/components/WorkingOnGUI.svelte";
-
-  import foodRaw from "$lib/assets/final_food.csv?raw";
-  import sportsRaw from "$lib/assets/sports.csv?raw";
-  import countriesRaw from "$lib/assets/countries.csv?raw";
+  import { i18n, t } from "$lib/i18n.svelte";
+  import { CATEGORIES, getCategoryData, type CategoryId } from "$lib/categories";
   import {
     parseCSV,
     parseCSVForHintless,
@@ -27,12 +24,6 @@
     type CustomGamePlayerCard,
   } from "$lib/game";
 
-  const CATEGORIES = [
-    { id: "food", label: "Food", data: foodRaw },
-    { id: "sports", label: "Sports", data: sportsRaw },
-    { id: "countries", label: "Countries", data: countriesRaw },
-  ]
-  type CategoryId = (typeof CATEGORIES)[number]["id"];
   const CATEGORIES_STORAGE_KEY = "impostor:enabledCategories";
 
   function loadStoredCategories(): Record<CategoryId, boolean> {
@@ -57,7 +48,7 @@
     try {
       localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(value));
     } catch {
-      alert("categories are not being saved");
+      alert(t('customgame.categoriesNotSaved'));
     }
   }
 
@@ -98,14 +89,14 @@
     syncPlayerNames(untrack(() => players), loadStoredNames()));
 
   $effect(() => {
-    saveStoredNames(playerNames);
+    saveStoredNames(playerNames, t('layout.namesNotSaved'));
   });
 
   // derived: actual impostor count (respects auto toggle)
   let resolvedImpostors = $derived(resolveImpostorCount(players, impostors, autoImpostor));
 
   let startingPlayerName = $derived(
-    playerNames[startingPlayer - 1]?.trim() || `Player ${startingPlayer}`
+    playerNames[startingPlayer - 1]?.trim() || `${t('setup.playerPrefix')} ${startingPlayer}`
   );
 
   // constraints  
@@ -122,20 +113,20 @@
   // start game
   function startGame() {
     const activeDatasets = CATEGORIES.filter((c) => enabledCategories[c.id]).map(
-      (c) => c.data
+      (c) => getCategoryData(c.id, i18n.lang)
     );
 
-    const pool = activeDatasets.length > 0 ? activeDatasets : CATEGORIES.map((c) => c.data);
+    const pool = activeDatasets.length > 0 ? activeDatasets : CATEGORIES.map((c) => getCategoryData(c.id, i18n.lang));
     const rawData = pickRandom(pool);
 
     if (gameType === "hintless") {
       const entries = parseCSVForHintless(rawData);
       const entry   = pickRandom(entries);
-      cards = buildCardsHintlessWithNames(players, resolvedImpostors, entry, playerNames);
+      cards = buildCardsHintlessWithNames(players, resolvedImpostors, entry, playerNames, t('setup.playerPrefix'));
     } else {
       const entries = parseCSV(rawData);
       const entry   = pickRandom(entries);
-      cards = buildCardsWithNames(players, resolvedImpostors, entry, playerNames);
+      cards = buildCardsWithNames(players, resolvedImpostors, entry, playerNames, t('setup.playerPrefix'));
     }
 
     currentCard   = 0;
@@ -167,12 +158,11 @@
     <div class="flex flex-col gap-4 items-center my-4">
 
       <!-- categories -->
-      <h2 class="text-4xl font-extrabold tracking-tight">Custom Game</h2>
+      <h2 class="text-4xl font-extrabold tracking-tight">{t('customgame.title')}</h2>
       <div class="flex flex-col items-center align-middle justify-center gap-4">
-        <h3> Categories available:</h3>
+        <h3> {t('setup.categoriesAvailable')}</h3>
         <div class="flex flex-wrap justify-center gap-2 m-1">
           {#each CATEGORIES as category (category.id)}
-            <!-- TODO inyect automatically the categories -->
             <Button
               variant="ghost"
               size="default"
@@ -181,7 +171,7 @@
                 : "text-muted-foreground opacity-50"}
               onclick={() => toggleCategory(category.id)}
             >
-              {category.label}
+              {t(category.translationKey)}
             </Button>
           {/each}
         </div>
@@ -192,10 +182,10 @@
     <div class="flex flex-col justify-center align-middle">
       <div class="sm:flex self-center mb-4 gap-2 text-2xl font-semibold">
         <Label class="text-2xl font-semibold"> 
-            Game Mode :
+            {t('customgame.gameMode')}
         </Label>
         <span>
-          {gameType.toString().toUpperCase()}
+          {gameType === "classic" ? t('customgame.classicUpper') : t('customgame.hintlessUpper')}
         </span>
       </div>
 
@@ -205,14 +195,14 @@
           class={gameType === "classic" ? "text-(--blendedMagenta) font-semibold" : ""}
           onclick={() => gameType = "classic"}
         >
-          Classic
+          {t('customgame.classic')}
         </Button>
         <Button
           variant="outline"
           class={gameType === "hintless" ? "text-(--blendedMagenta) font-semibold" : ""}
           onclick={() => gameType = "hintless"}
         >
-          Hintless
+          {t('customgame.hintless')}
         </Button>
       </ButtonGroup.Root>
 
@@ -226,7 +216,7 @@
             <!-- Players -->
             <div class="flex flex-col items-center justify-center align-middle gap-2">
               <Label class="text-sm font-semibold">
-                Players <span class="text-muted-foreground font-normal">(3-{MAX_PLAYERS})</span>
+                {t('setup.players')} <span class="text-muted-foreground font-normal">(3-{MAX_PLAYERS})</span>
               </Label>
               <div class="flex items-center align-middle justify-center text-center gap-2">
                 <Button
@@ -252,7 +242,7 @@
             <!-- Impostors -->
             <div class="flex flex-col items-center justify-center align-middle gap-2">
               <Label class="text-sm font-semibold">
-                Impostors <span class="text-muted-foreground font-normal">(1-{MAX_IMPOSTORS})</span>
+                {t('setup.impostors')} <span class="text-muted-foreground font-normal">(1-{MAX_IMPOSTORS})</span>
               </Label>
               <div class="flex items-center align-middle justify-center text-center gap-2" class:opacity-40={autoImpostor}>
                 <Button
@@ -284,7 +274,7 @@
                 class="w-4 h-4 accent-primary"
                 bind:checked={autoImpostor}
               />
-              <span class="block w-full text-sm wrap-break-word">Auto-manage impostors <br /> based on player count</span>
+              <span class="block w-full text-sm wrap-break-word">{t('setup.autoImpostors')}</span>
             </Label>
 
           </Card.Content>
@@ -293,7 +283,7 @@
         <Card.Root class="w-full h-full max-w-sm flex flex-col items-center justify-center align-middle p-4">
           <Card.Content class="flex flex-col items-center justify-center align-middle gap-5 p-2">
             <Label class="font-semibold">
-              Player names <span class="text-muted-foreground font-normal">(optional)</span>
+              {t('customgame.playerNames')} <span class="text-muted-foreground font-normal">{t('customgame.optional')}</span>
             </Label>
             <div class="w-full max-h-64 overflow-y-auto flex flex-col gap-2 pr-1">
               {#each Array(players) as _, i}
@@ -308,7 +298,7 @@
                     border border-input bg-transparent
                     px-2 py-1.5 text-md
                     outline-none focus:ring-2 focus:ring-primary/40"
-                    placeholder={`Player ${i + 1}`}
+                    placeholder={t('customgame.playerPlaceholder', { number: i + 1 })}
                     maxlength={20}
                     bind:value={playerNames[i]}
                   />
@@ -329,14 +319,14 @@
     <div class="flex flex-col sm:gap-4 gap-2 items-center my-2">
 
       <Button class="w-full max-w-sm py-6 text-lg font-bold" onclick={startGame}>
-        Start Game
+        {t('common.startGame')}
       </Button>
 
       <Button
         variant="outline"
         class="w-full max-w-sm py-6 text-lg font-bold"
         onclick={() => goto("/")}>
-        Go back
+        {t('common.goBack')}
       </Button>
     </div>
 
@@ -348,7 +338,7 @@
   <main class="min-h-screen flex flex-col items-center justify-center gap-6 p-6">
 
     <p class="text-muted-foreground text-md">
-      Pass the phone to <span class="font-bold text-foreground">{card.name}</span>
+      {t('reveal.passPhoneToName', { name: card.name })}
     </p>
 
     <!-- Card -->
@@ -369,15 +359,15 @@
       onkeydown={(e) => e.key === "Enter" && !cardFlipped && flipCard()}
     >
       {#if !cardFlipped}
-        <p class="text-4xl font-semibold">Tap to reveal</p>
-        <p class="text-xs text-muted-foreground">Make sure no one else is watching</p>
+        <p class="text-4xl font-semibold">{t('reveal.tapToReveal')}</p>
+        <p class="text-xs text-muted-foreground">{t('reveal.keepSecret')}</p>
       {:else}
         <p class="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          {card.role === "impostor" ? "You are the Impostor" : "You are a Player"}
+          {card.role === "impostor" ? t('reveal.youAreImpostor') : t('reveal.youArePlayer')}
         </p>
         {#if card.role === "impostor" && card.word === ""}
           <p class="text-3xl font-extrabold tracking-tight text-destructive">
-            No clue 4 u
+            {t('reveal.noClueForYou')}
           </p>
         {:else}
           <p class="text-5xl font-extrabold">{card.word}</p>
@@ -385,7 +375,7 @@
 
         <p class="text-xs text-muted-foreground mt-2">
           {card.role === "impostor"
-            ? card.word === "" ? "hintless mode active" : "This is your hint — stay sneaky." : "This is the secret word."}
+            ? card.word === "" ? t('reveal.hintlessActive') : t('reveal.hintImpostor') : t('reveal.hintPlayer')}
         </p>
       {/if}
     </div>
@@ -400,14 +390,14 @@
       {#if currentCard < cards.length - 1}
         <div class="flex flex-row items-center align-middle justify-center gap-2">
           <span>
-            Next Player
+            {t('reveal.nextPlayer')}
           </span>
           <MoveRight class="self-center align-middle" />
         </div>
       {:else}
         <div class="flex flex-row items-center align-middle justify-center gap-2">
           <span>
-            Start Game
+            {t('common.startGame')}
           </span>
           <Dices />
         </div>
@@ -421,15 +411,15 @@
 {:else if screen === "start"}
 <main class="min-h-screen flex flex-col items-center justify-center gap-6 p-6 text-center">
 
-  <p class="text-muted-foreground text-sm uppercase tracking-widest">Game on!</p>
+  <p class="text-muted-foreground text-sm uppercase tracking-widest">{t('start.gameOn')}</p>
   <h2 class="text-5xl font-extrabold">
     {startingPlayerName}
   </h2>
-  <p class="text-muted-foreground">goes first</p>
+  <p class="text-muted-foreground">{t('start.goesFirst')}</p>
 
   <Button variant="outline" class="mt-8 w-full max-w-xs"
     onclick={() => { screen = "setup"; }}>
-    Play Again
+    {t('start.playAgain')}
   </Button>
 
 </main>

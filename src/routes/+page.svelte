@@ -2,13 +2,14 @@
   import { goto } from "$app/navigation";
   import { Button } from "$lib/components/ui/button/index.js"
   import * as Card from "$lib/components/ui/card/index.js";
+  import { t } from "$lib/i18n.svelte";
 </script>
 
 <main class="mx-auto min-h-screen flex flex-col items-center justify-center gap-8 p-4 ">
 <div class="flex flex-col items-center gap-4 text-center">
-  <h1 class="text-4xl font-extrabold tracking-tight">Impostor Game</h1>
+  <h1 class="text-4xl font-extrabold tracking-tight">{t('home.title')}</h1>
   <p class="text-muted-foreground">
-    By 
+    {t('home.by')} 
     <a
       href="https://github.com/HugeErick"
       target="_blank"
@@ -25,7 +26,7 @@
         class="w-full"
         onclick={() => goto("/quickplay")}
       >
-        Quick Play
+        {t('home.quickPlay')}
       </Button>
 
       <Button
@@ -33,7 +34,7 @@
         class="w-full"
         onclick={() => goto("/customgame")}
       >
-        Custom Game
+        {t('home.customGame')}
       </Button>
     </Card.Content>
   </Card.Root>

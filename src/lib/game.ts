@@ -69,9 +69,9 @@ export function syncPlayerNames(count: number, existing: string[] = []): string[
   return Array.from({ length: count }, (_, i) => existing[i] ?? "");
 }
 
-function resolveName(names: string[], index: number): string {
+export function resolveName(names: string[], index: number, playerPrefix: string = "Player"): string {
   const raw = names[index]?.trim();
-  return raw ? raw : `Player ${index + 1}`;
+  return raw ? raw : `${playerPrefix} ${index + 1}`;
 }
 
 const PLAYER_NAMES_STORAGE_KEY = "impostor:playerNames";
@@ -88,12 +88,12 @@ export function loadStoredNames(): string[] {
   }
 }
 
-export function saveStoredNames(names: string[]): void {
+export function saveStoredNames(names: string[], errorMessage?: string): void {
   if (typeof localStorage === "undefined") return;
   try {
     localStorage.setItem(PLAYER_NAMES_STORAGE_KEY, JSON.stringify(names));
   } catch {
-    alert("Something went wrong saving persistenly the names");
+    alert(errorMessage || "Something went wrong saving persistenly the names");
     // ignore quota / serialization errors — names just won't persist this time
   }
 }
@@ -117,7 +117,8 @@ export function buildCardsWithNames(
   players: number,
   impostorCount: number,
   entry: WordEntry,
-  names: string[] = []
+  names: string[] = [],
+  playerPrefix: string = "Player"
 ): CustomGamePlayerCard[] {
   // build role list: N players, M impostors
   const roles: Role[] = [
@@ -130,7 +131,7 @@ export function buildCardsWithNames(
     number: i + 1,
     role,
     word: role === "player" ? entry.word : entry.hint, 
-    name: resolveName(names, i)
+    name: resolveName(names, i, playerPrefix)
   }));
 }
 
@@ -138,7 +139,8 @@ export function buildCardsHintlessWithNames(
   players: number,
   impostorCount: number,
   entry: WordOnlyEntry,
-  names: string[] = []
+  names: string[] = [],
+  playerPrefix: string = "Player"
 ): CustomGamePlayerCard[] {
   const roles: Role[] = [
     ...Array(players - impostorCount).fill("player"),
@@ -150,7 +152,7 @@ export function buildCardsHintlessWithNames(
     number: i + 1,
     role,
     word: role === "player" ? entry.word : "",
-    name: resolveName(names, i),
+    name: resolveName(names, i, playerPrefix),
   }));
 }
 

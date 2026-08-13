@@ -27,10 +27,11 @@
     <div class="flex justify-center align-middle">
       <Button
         variant="outline"
+        disabled={i18n.locked}
         onclick={() => i18n.toggle()}
         aria-label={t('layout.toggleLanguage')}
-        title={t('layout.toggleLanguage')}
-        class="flex items-center gap-1.5 font-semibold text-xs uppercase"
+        title={i18n.locked ? t('layout.toggleLanguageLocked') : t('layout.toggleLanguage')}
+        class="flex items-center gap-1.5 font-semibold text-xs uppercase disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <Globe class="size-4" />
         <span>{i18n.lang.toUpperCase()}</span>

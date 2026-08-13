@@ -1,5 +1,3 @@
-import { untrack } from "svelte";
-
 export type Language = "en" | "es";
 
 const LANGUAGE_STORAGE_KEY = "impostor:language";
@@ -63,8 +61,10 @@ const translations = {
     workingOnGUI: {
       title: "Working on the following feature:",
     },
+    // en layout
     layout: {
       toggleLanguage: "Switch language",
+      toggleLanguageLocked: "Language is locked during a game",
       namesNotSaved: "Something went wrong saving persistenly the names",
     },
   },
@@ -126,8 +126,10 @@ const translations = {
     workingOnGUI: {
       title: "Trabajando en la siguiente función:",
     },
+    // es layout
     layout: {
       toggleLanguage: "Cambiar idioma",
+      toggleLanguageLocked: "El idioma está bloqueado durante una partida",
       namesNotSaved: "Algo salió mal al guardar los nombres persistentemente",
     },
   },
@@ -158,12 +160,14 @@ function getInitialLanguage(): Language {
 }
 
 let currentLang = $state<Language>(getInitialLanguage());
+let gameLocked = $state(false);
 
 export const i18n = {
   get lang() {
     return currentLang;
   },
   set lang(val: Language) {
+    if (gameLocked) return;
     currentLang = val;
     if (typeof localStorage !== "undefined") {
       try {
@@ -171,7 +175,14 @@ export const i18n = {
       } catch {}
     }
   },
+  get locked() {
+    return gameLocked;
+  },
+  set locked(val: boolean) {
+    gameLocked = val;
+  },
   toggle() {
+    if (gameLocked) return;
     this.lang = currentLang === "en" ? "es" : "en";
   },
   t(key: TranslationKey, params?: Record<string, string | number>): string {

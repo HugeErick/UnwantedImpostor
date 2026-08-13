@@ -19,6 +19,11 @@
   // match state 
   type Screen = "setup" | "reveal" | "start";
 
+  $effect(() => {
+    i18n.locked = screen !== "setup";
+    return () => { i18n.locked = false; };
+  });
+
   let screen  = $state<Screen>("setup");
   let players = $state(6);
   let impostors    = $state(1);

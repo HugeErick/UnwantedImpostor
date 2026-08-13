@@ -72,6 +72,13 @@
 
   // match state 
   type Screen = "setup" | "reveal" | "start";
+
+
+  $effect(() => {
+    i18n.locked = screen !== "setup";
+    return () => { i18n.locked = false; };
+  });
+
   type GameType = "classic" | "hintless";
   let gameType = $state<GameType>("classic");
 

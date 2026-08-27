@@ -16,6 +16,7 @@ const translations = {
       players: "Players",
       impostors: "Impostors",
       autoImpostors: "Auto-manage impostors based on player count",
+      autoImpostorsTT: "1 impostor for 1–8 players, 2 for 9–18 players, and 3 for 19+ players.",
       playerPrefix: "Player",
     },
     categories: {
@@ -65,6 +66,8 @@ const translations = {
     layout: {
       toggleLanguage: "Switch language",
       toggleLanguageLocked: "Language is locked during a game",
+      cancelGame: "Cancel game",
+      cancelGameTT: "Cancel the current game and return to settings",
       namesNotSaved: "Something went wrong saving persistenly the names",
     },
   },
@@ -81,6 +84,7 @@ const translations = {
       players: "Jugadores",
       impostors: "Impostores",
       autoImpostors: "Autogestionar impostores según la cantidad de jugadores",
+      autoImpostorsTT: "1 impostor para 1–8 jugadores, 2 para 9–18 jugadores y 3 para 19 o más.",
       playerPrefix: "Jugador",
     },
     categories: {
@@ -130,6 +134,8 @@ const translations = {
     layout: {
       toggleLanguage: "Cambiar idioma",
       toggleLanguageLocked: "El idioma está bloqueado durante una partida",
+      cancelGame: "Cancelar partida",
+      cancelGameTT: "Cancela la partida actual y vuelve a los ajustes",
       namesNotSaved: "Algo salió mal al guardar los nombres persistentemente",
     },
   },
@@ -154,13 +160,14 @@ function getInitialLanguage(): Language {
       return "es";
     }
   } catch {
-    // fallback
+    alert("language failed to initialize");
   }
   return "en";
 }
 
 let currentLang = $state<Language>(getInitialLanguage());
 let gameLocked = $state(false);
+let cancelGame = $state<(() => void) | null>(null);
 
 export const i18n = {
   get lang() {
@@ -174,6 +181,12 @@ export const i18n = {
         localStorage.setItem(LANGUAGE_STORAGE_KEY, val);
       } catch {}
     }
+  },
+  get cancelGame() {
+    return cancelGame;
+  },
+  set cancelGame(fn: (() => void) | null) {
+    cancelGame = fn;
   },
   get locked() {
     return gameLocked;

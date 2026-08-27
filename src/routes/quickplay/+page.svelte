@@ -2,9 +2,10 @@
   // quickplay/+page.svelte
   import { goto } from "$app/navigation";
   import { Button } from "$lib/components/ui/button/index.js";
+  import * as Tooltip from "$lib/components/ui/tooltip/index.js";
   import { Label } from "$lib/components/ui/label/index.js";
   import * as Card from "$lib/components/ui/card/index.js";
-  import { Minus, Plus, MoveRight, Dices } from "@lucide/svelte";
+  import { Minus, Plus, MoveRight, Dices, CircleQuestionMark } from "@lucide/svelte";
   import { i18n, t } from "$lib/i18n.svelte";
   import { getAllDatasets } from "$lib/categories";
   import {
@@ -21,7 +22,23 @@
 
   $effect(() => {
     i18n.locked = screen !== "setup";
-    return () => { i18n.locked = false; };
+
+    if (screen !== "setup") {
+      i18n.cancelGame = () => {
+        screen = "setup";
+        cards = [];
+        currentCard = 0;
+        cardFlipped = false;
+        startingPlayer = 0;
+      };
+    } else {
+      i18n.cancelGame = null;
+    }
+
+    return () => {
+      i18n.locked = false;
+      i18n.cancelGame = null;
+    };
   });
 
   let screen  = $state<Screen>("setup");
@@ -143,18 +160,34 @@
           >
             <Plus />
           </Button>
+          </div>
         </div>
-      </div>
 
-      <!-- Auto impostor toggle -->
-      <Label class="flex items-center gap-3 cursor-pointer select-none">
-        <input
-          type="checkbox"
-          class="w-4 h-4 accent-primary"
-          bind:checked={autoImpostor}
-        />
-        <span class="block w-full text-sm wrap-break-word">{t('setup.autoImpostors')}</span>
-      </Label>
+        <!-- Auto impostor toggle -->
+        <Label class="flex items-center gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            class="w-4 h-4 accent-primary"
+            bind:checked={autoImpostor}
+          />
+          <div class="flex w-full text-sm wrap-break-word gap-2">
+            <Tooltip.Provider >
+              <Tooltip.Root >
+                <Tooltip.Trigger >
+                  <CircleQuestionMark class="size-5 my-auto" />
+                </Tooltip.Trigger>
+                <Tooltip.Content>
+                  <p>
+                    {t('setup.autoImpostorsTT')}
+                  </p>
+                </Tooltip.Content>
+              </Tooltip.Root>
+            </Tooltip.Provider>
+            <span>
+              {t('setup.autoImpostors')}
+            </span>
+          </div>
+        </Label>
 
     </Card.Content>
   </Card.Root>

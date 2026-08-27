@@ -22,6 +22,7 @@ export interface WordOnlyEntry {
   word: string;
 }
 
+// auto impostor setting
 export function resolveImpostorCount(players: number, impostors: number, auto: boolean): number {
   if (!auto) return impostors;
   if (players < 9)  return 1;

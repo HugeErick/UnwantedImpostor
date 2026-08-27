@@ -3,11 +3,12 @@
   import { untrack } from "svelte";
   import { goto } from "$app/navigation";
   import { Button } from "$lib/components/ui/button/index.js";
+  import * as Tooltip from "$lib/components/ui/tooltip/index.js";
   import * as ButtonGroup from "$lib/components/ui/button-group/index.js";
   import { Label } from "$lib/components/ui/label/index.js";
   import { Input } from "$lib/components/ui/input/index.js"
   import * as Card from "$lib/components/ui/card/index.js";
-  import { Minus, Plus, MoveRight, Dices, X } from "@lucide/svelte";
+  import { Minus, Plus, MoveRight, Dices, X, CircleQuestionMark } from "@lucide/svelte";
   import { i18n, t } from "$lib/i18n.svelte";
   import { CATEGORIES, getCategoryData, type CategoryId } from "$lib/categories";
   import {
@@ -76,7 +77,23 @@
 
   $effect(() => {
     i18n.locked = screen !== "setup";
-    return () => { i18n.locked = false; };
+
+    if (screen !== "setup") {
+      i18n.cancelGame = () => {
+        screen = "setup";
+        cards = [];
+        currentCard = 0;
+        cardFlipped = false;
+        startingPlayer = 0;
+      };
+    } else {
+      i18n.cancelGame = null;
+    }
+
+    return () => {
+      i18n.locked = false;
+      i18n.cancelGame = null;
+    };
   });
 
   type GameType = "classic" | "hintless";
@@ -214,7 +231,7 @@
       </ButtonGroup.Root>
 
       <div
-        class="w-full flex flex-col sm:flex-row sm:gap-6 gap-2 justify-center align-middle p-2 items-start"
+        class="w-full flex flex-col sm:flex-row sm:gap-6 gap-2 justify-center align-middle p-2 items-center sm:items-start"
         id="customSettings"
       >
         <Card.Root class="w-full h-full max-w-sm flex flex-col items-center justify-center align-middle p-4">
@@ -281,7 +298,23 @@
                 class="w-4 h-4 accent-primary"
                 bind:checked={autoImpostor}
               />
-              <span class="block w-full text-sm wrap-break-word">{t('setup.autoImpostors')}</span>
+              <div class="flex w-full text-sm wrap-break-word gap-2">
+                <Tooltip.Provider >
+                  <Tooltip.Root >
+                    <Tooltip.Trigger >
+                      <CircleQuestionMark class="size-5 my-auto" />
+                    </Tooltip.Trigger>
+                    <Tooltip.Content>
+                      <p>
+                        {t('setup.autoImpostorsTT')}
+                      </p>
+                    </Tooltip.Content>
+                  </Tooltip.Root>
+                </Tooltip.Provider>
+                <span>
+                  {t('setup.autoImpostors')}
+                </span>
+              </div>
             </Label>
 
           </Card.Content>
